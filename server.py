@@ -77,18 +77,19 @@ def mix_names():
         
         print(f"Received data: {data}")
         
-        # Extract names from request
-        left_first = data.get('leftFirstName', '').strip()
-        left_last = data.get('leftLastName', '').strip()
-        right_first = data.get('rightFirstName', '').strip()
-        right_last = data.get('rightLastName', '').strip()
+        # Extract names from request with proper None handling
+        # Use 'or' to handle None values explicitly set in JSON
+        left_first = (data.get('leftFirstName') or '').strip()
+        left_last = (data.get('leftLastName') or '').strip()
+        right_first = (data.get('rightFirstName') or '').strip()
+        right_last = (data.get('rightLastName') or '').strip()
         
         # Validate input
         if not all([left_first, left_last, right_first, right_last]):
             return jsonify({'error': 'All name fields are required'}), 400
         
         # Get API key from request or use environment variable
-        request_api_key = data.get('apiKey', '').strip()
+        request_api_key = (data.get('apiKey') or '').strip()
         active_api_key = request_api_key if request_api_key else api_key
         
         # Check if API key is available
