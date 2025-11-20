@@ -41,8 +41,10 @@ def handle_exception(e):
     raise e
 
 # Initialize xAI Grok API client using OpenAI SDK
-# Note: API key can be provided via frontend settings (stored in localStorage)
-# Environment variable is optional - frontend will send API key in request
+# API key priority:
+# 1. Railway Secret Variable (XAI_API_KEY) - automatically loaded from Railway secrets
+# 2. Local .env file (XAI_API_KEY) - for local development
+# 3. Frontend settings (localStorage) - fallback if no env var is set
 api_key = os.getenv('XAI_API_KEY')
 if api_key:
     # Initialize OpenAI client with xAI endpoint if env var is set
@@ -88,7 +90,8 @@ def mix_names():
         if not all([left_first, left_last, right_first, right_last]):
             return jsonify({'error': 'All name fields are required'}), 400
         
-        # Get API key from request or use environment variable
+        # Get API key - priority: Railway Secret Variable > Local .env > Frontend localStorage
+        # Railway secrets are automatically available via os.getenv() when deployed
         request_api_key = (data.get('apiKey') or '').strip()
         active_api_key = request_api_key if request_api_key else api_key
         
