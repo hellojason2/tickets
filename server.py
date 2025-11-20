@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from openai import OpenAI
 import os
+import json
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -26,13 +27,18 @@ def internal_error(error):
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    if request.path.startswith('/api/'):
-        import traceback
-        print(f"API Error: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({'error': str(e)}), 500
-    # For non-API routes, let Flask handle it normally
-    return None
+    import traceback
+    try:
+        # Check if this is an API request
+        if hasattr(request, 'path') and request.path.startswith('/api/'):
+            print(f"API Error: {str(e)}")
+            print(traceback.format_exc())
+            return jsonify({'error': str(e)}), 500
+    except:
+        # If we can't access request, just return a generic error
+        pass
+    # Re-raise for non-API routes to let Flask handle it
+    raise e
 
 # Initialize xAI Grok API client using OpenAI SDK
 # Note: API key can be provided via frontend settings (stored in localStorage)
@@ -143,7 +149,6 @@ Respond ONLY with a JSON object in this exact format:
 {{"mixedFirstName": "...", "mixedLastName": "..."}}"""
         
         # Call Grok API using OpenAI-compatible interface
-        import json
         response = active_client.chat.completions.create(
             model="grok-4-1-fast-non-reasoning",  # Latest Grok 4.1 model
             messages=[
