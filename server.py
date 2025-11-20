@@ -11,18 +11,18 @@ app = Flask(__name__, static_folder='.')
 CORS(app)
 
 # Initialize xAI Grok API client using OpenAI SDK
+# Note: API key can be provided via frontend settings (stored in localStorage)
+# Environment variable is optional - frontend will send API key in request
 api_key = os.getenv('XAI_API_KEY')
-if not api_key:
-    print("Warning: XAI_API_KEY not found in environment variables")
-    print("The server will run, but name mixing will not work without an API key.")
-    print("Please set XAI_API_KEY environment variable or create a .env file")
-    client = None
-else:
-    # Initialize OpenAI client with xAI endpoint
+if api_key:
+    # Initialize OpenAI client with xAI endpoint if env var is set
     client = OpenAI(
         api_key=api_key,
         base_url="https://api.x.ai/v1"
     )
+else:
+    # API key will be provided by frontend via request body
+    client = None
 
 @app.route('/')
 def serve_index():
@@ -53,7 +53,7 @@ def mix_names():
         
         # Check if API key is available
         if not active_api_key:
-            return jsonify({'error': 'XAI_API_KEY not configured. Please set your API key in settings or .env file'}), 500
+            return jsonify({'error': 'API key not configured. Please set your Grok API key in the settings (gear icon) in the application.'}), 500
         
         # Create client with the active API key
         active_client = client if (not request_api_key and client) else OpenAI(
