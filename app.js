@@ -55,8 +55,10 @@ const timestamp = document.getElementById('timestamp');
 const langEnBtn = document.getElementById('langEn');
 const langViBtn = document.getElementById('langVi');
 
-// API endpoint
-const API_URL = 'http://localhost:5001/api/mix-names';
+// API endpoint - automatically detect if running locally or on Railway
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5001/api/mix-names'
+    : '/api/mix-names';
 
 // Initialize language
 function initLanguage() {

@@ -130,5 +130,11 @@ Respond ONLY with a JSON object in this exact format:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001, host='127.0.0.1')
+    # Get port from environment variable (Railway provides this) or default to 5001 for local
+    port = int(os.environ.get('PORT', 5001))
+    # Bind to 0.0.0.0 to accept connections from Railway
+    host = os.environ.get('HOST', '0.0.0.0')
+    # Disable debug mode in production
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug, port=port, host=host)
 
