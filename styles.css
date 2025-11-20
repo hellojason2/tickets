@@ -348,12 +348,69 @@ header h1 {
     pointer-events: none;
 }
 
+.badge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
 .badge-label {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.08em;
+}
+
+.copy-btn {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid #10B981;
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: #10B981;
+    position: relative;
+    width: 32px;
+    height: 32px;
+}
+
+.copy-btn:hover {
+    background: #10B981;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.copy-btn:active {
+    transform: scale(0.95);
+}
+
+.copy-btn .check-icon {
+    position: absolute;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s ease;
+}
+
+.copy-btn.copied {
+    background: #10B981;
+    color: white;
+    border-color: #059669;
+}
+
+.copy-btn.copied svg:first-child {
+    opacity: 0;
+    transform: scale(0);
+}
+
+.copy-btn.copied .check-icon {
+    opacity: 1;
+    transform: scale(1);
 }
 
 .badge-value {

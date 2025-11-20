@@ -242,6 +242,54 @@ function showResults() {
     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+// Copy to clipboard functionality
+function copyToClipboard(text, button) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Visual feedback
+        button.classList.add('copied');
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+            button.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            button.classList.add('copied');
+            setTimeout(() => {
+                button.classList.remove('copied');
+            }, 2000);
+        } catch (err) {
+            console.error('Fallback copy failed: ', err);
+        }
+        document.body.removeChild(textArea);
+    });
+}
+
+// Add copy button event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Use event delegation for copy buttons (they're created dynamically)
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.copy-btn')) {
+            const button = e.target.closest('.copy-btn');
+            const targetId = button.getAttribute('data-copy-target');
+            const targetElement = document.getElementById(targetId);
+            
+            if (targetElement && targetElement.textContent.trim()) {
+                copyToClipboard(targetElement.textContent.trim(), button);
+            }
+        }
+    });
+});
+
 function hideResults() {
     resultsSection.classList.add('hidden');
 }
