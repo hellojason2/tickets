@@ -1,0 +1,134 @@
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
+from openai import OpenAI
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+app = Flask(__name__, static_folder='.')
+CORS(app)
+
+# Initialize xAI Grok API client using OpenAI SDK
+api_key = os.getenv('XAI_API_KEY')
+if not api_key:
+    print("Warning: XAI_API_KEY not found in environment variables")
+    print("The server will run, but name mixing will not work without an API key.")
+    print("Please set XAI_API_KEY environment variable or create a .env file")
+    client = None
+else:
+    # Initialize OpenAI client with xAI endpoint
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.x.ai/v1"
+    )
+
+@app.route('/')
+def serve_index():
+    return send_from_directory('.', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory('.', path)
+
+@app.route('/api/mix-names', methods=['POST'])
+def mix_names():
+    try:
+        data = request.json
+        
+        # Extract names from request
+        left_first = data.get('leftFirstName', '').strip()
+        left_last = data.get('leftLastName', '').strip()
+        right_first = data.get('rightFirstName', '').strip()
+        right_last = data.get('rightLastName', '').strip()
+        
+        # Validate input
+        if not all([left_first, left_last, right_first, right_last]):
+            return jsonify({'error': 'All name fields are required'}), 400
+        
+        # Get API key from request or use environment variable
+        request_api_key = data.get('apiKey', '').strip()
+        active_api_key = request_api_key if request_api_key else api_key
+        
+        # Check if API key is available
+        if not active_api_key:
+            return jsonify({'error': 'XAI_API_KEY not configured. Please set your API key in settings or .env file'}), 500
+        
+        # Create client with the active API key
+        active_client = client if (not request_api_key and client) else OpenAI(
+            api_key=active_api_key,
+            base_url="https://api.x.ai/v1"
+        )
+        
+        # Craft the prompt for Grok
+        prompt = f"""You are a name mixing expert. Your task is to intelligently mix two names based on specific rules and correlation patterns.
+
+RULES:
+1. Take the first 3 letters from the RIGHT side's first name and add them as a prefix to the LEFT side's first name
+2. CRITICAL: The LEFT side's first name MUST be preserved COMPLETELY, including ALL middle names and spaces. 
+   - If the left first name is "Dinh Thi", the mixed result must preserve the FULL "Dinh Thi" 
+   - The result should be "matdinh thi" (combining the prefix with the complete first name including middle name)
+   - DO NOT split or separate the left side's first name - keep it intact as one unit
+3. For the last name, take the first 3 letters from the RIGHT side's last name and add them as a prefix to the LEFT side's last name
+4. IMPORTANT: Find correlations and overlapping patterns between names to create natural-sounding combinations
+5. When there are matching letters or patterns, merge them intelligently so that removing letters from the mixed name reveals the original left name
+
+EXAMPLES:
+Example 1:
+- Left: John Doe
+- Right: Kelly Connor
+- Mixed First Name: kelJohn (kel + John)
+- Mixed Last Name: conDoe (con + Doe)
+
+Example 2:
+- Left: John Doe
+- Right: Kelly Dong
+- Mixed First Name: kelJohn (kel + John)
+- Mixed Last Name: Done (do + ne, where 'do' from Dong matches the start of 'Doe', creating correlation - when you remove 'n' from 'Done' you get 'Doe')
+
+Example 3 (with middle name - CRITICAL):
+- Left: Dinh Thi Hoang (where "Dinh Thi" is the first name with middle name)
+- Right: Mat Tran
+- Mixed First Name: matdinh thi (mat + "Dinh Thi" - preserving the COMPLETE first name "Dinh Thi" with space)
+- Mixed Last Name: traHoang (tra + Hoang)
+
+Example 4 (another middle name example):
+- Left: Nguyen Van An (where "Nguyen Van" is the first name with middle name)
+- Right: Le Tran
+- Mixed First Name: lenNguyen Van (le + "Nguyen Van" - preserving the COMPLETE first name "Nguyen Van" with space)
+- Mixed Last Name: traAn (tra + An)
+
+Now mix these names:
+Left side (real passenger): {left_first} {left_last}
+Right side (name to mix with): {right_first} {right_last}
+
+IMPORTANT: Preserve the COMPLETE first name from the left side (including all middle names) in the mixed result.
+
+Respond ONLY with a JSON object in this exact format:
+{{"mixedFirstName": "...", "mixedLastName": "..."}}"""
+        
+        # Call Grok API using OpenAI-compatible interface
+        import json
+        response = active_client.chat.completions.create(
+            model="grok-4-1-fast-non-reasoning",  # Latest Grok 4.1 model
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that always responds with valid JSON only."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0
+        )
+        
+        # Parse the response
+        result = json.loads(response.choices[0].message.content)
+        
+        return jsonify(result)
+        
+    except json.JSONDecodeError as e:
+        return jsonify({'error': 'Failed to parse Grok response', 'details': str(e)}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5001, host='127.0.0.1')
+

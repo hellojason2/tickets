@@ -1,0 +1,4 @@
+#!/bin/bash
+# Simple git push wrapper for tickets repository
+exec "$(dirname "$0")/.cursor/commands/git.sh"
+
