@@ -241,8 +241,8 @@ header h1 {
 }
 
 .results-chat-box {
-    background: var(--background);
-    border-top: 1px solid var(--border-light);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-top: 3px solid #4F46E5;
     padding: 32px 48px;
     animation: slideUp 0.4s ease-out;
 }
@@ -250,10 +250,28 @@ header h1 {
 .chat-message {
     max-width: 100%;
     background: var(--surface);
-    border: 1px solid var(--border-color);
+    border: 3px solid #10B981;
     border-radius: 16px;
     padding: 28px;
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3), var(--shadow-xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.chat-message::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #10B981, #059669, #10B981);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
 }
 
 .message-header {
@@ -267,7 +285,7 @@ header h1 {
 
 .bot-label {
     font-weight: 600;
-    color: var(--text-primary);
+    color: #059669;
     font-size: 1rem;
     display: flex;
     align-items: center;
@@ -300,21 +318,34 @@ header h1 {
 .name-badge {
     flex: 1;
     min-width: 240px;
-    background: var(--background);
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
     padding: 24px;
     border-radius: 12px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2), var(--shadow-md);
     display: flex;
     flex-direction: column;
     gap: 12px;
-    border: 1px solid var(--border-color);
-    transition: all 0.2s ease;
+    border: 2px solid #10B981;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 .name-badge:hover {
-    border-color: var(--primary-color);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+    border-color: #059669;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4), var(--shadow-lg);
+    transform: translateY(-2px) scale(1.02);
+}
+
+.name-badge::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), transparent);
+    pointer-events: none;
 }
 
 .badge-label {
@@ -328,8 +359,9 @@ header h1 {
 .badge-value {
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #059669;
     word-break: break-word;
+    text-shadow: 0 1px 2px rgba(16, 185, 129, 0.1);
 }
 
 .error-section {
