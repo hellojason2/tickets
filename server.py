@@ -24,18 +24,16 @@ else:
     # API key will be provided by frontend via request body
     client = None
 
-@app.route('/')
-def serve_index():
-    return send_from_directory('.', 'index.html')
-
-@app.route('/<path:path>')
-def serve_static(path):
-    return send_from_directory('.', path)
-
 @app.route('/api/mix-names', methods=['POST'])
 def mix_names():
     try:
+        # Check if request has JSON content
+        if not request.is_json:
+            return jsonify({'error': 'Content-Type must be application/json'}), 400
+        
         data = request.json
+        if not data:
+            return jsonify({'error': 'Invalid JSON in request body'}), 400
         
         # Extract names from request
         left_first = data.get('leftFirstName', '').strip()
@@ -128,6 +126,18 @@ Respond ONLY with a JSON object in this exact format:
         return jsonify({'error': 'Failed to parse Grok response', 'details': str(e)}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# Static file routes - must be after API routes to avoid conflicts
+@app.route('/')
+def serve_index():
+    return send_from_directory('.', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    # Don't serve API routes as static files
+    if path.startswith('api/'):
+        return jsonify({'error': 'Not found'}), 404
+    return send_from_directory('.', path)
 
 if __name__ == '__main__':
     # Get port from environment variable (Railway provides this) or default to 5001 for local
