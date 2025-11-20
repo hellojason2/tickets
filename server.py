@@ -8,7 +8,31 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__, static_folder='.')
-CORS(app)
+# Configure CORS to allow all origins (for Railway deployment)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# Global error handler to ensure JSON responses
+@app.errorhandler(404)
+def not_found(error):
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'API endpoint not found'}), 404
+    return send_from_directory('.', 'index.html')
+
+@app.errorhandler(500)
+def internal_error(error):
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'Internal server error', 'details': str(error)}), 500
+    return jsonify({'error': 'Internal server error'}), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    if request.path.startswith('/api/'):
+        import traceback
+        print(f"API Error: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+    # For non-API routes, let Flask handle it normally
+    return None
 
 # Initialize xAI Grok API client using OpenAI SDK
 # Note: API key can be provided via frontend settings (stored in localStorage)
@@ -27,13 +51,21 @@ else:
 @app.route('/api/mix-names', methods=['POST'])
 def mix_names():
     try:
+        print(f"API Route hit: /api/mix-names")
+        print(f"Request method: {request.method}")
+        print(f"Content-Type: {request.content_type}")
+        
         # Check if request has JSON content
         if not request.is_json:
+            print("Request is not JSON")
             return jsonify({'error': 'Content-Type must be application/json'}), 400
         
         data = request.json
         if not data:
+            print("No data in request")
             return jsonify({'error': 'Invalid JSON in request body'}), 400
+        
+        print(f"Received data: {data}")
         
         # Extract names from request
         left_first = data.get('leftFirstName', '').strip()
